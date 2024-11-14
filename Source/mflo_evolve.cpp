@@ -42,7 +42,19 @@ void mflo::EvolveAMR(Real final_time, bool only_flow)
         int lev = 0;
         int iteration = 1;
         timeStep(lev, cur_time, iteration, only_flow);
-
+///////////////////////////////
+	Real max_temp=0.0; Real max_velx=0.0; Real max_vely=0.0; Real max_velz=0.0; Real max_src=0.0;
+	for(int level=0;level<=finest_level; level++)
+	{
+		max_temp=std::max(max_temp,phi_new[level].norm0(TEMP_INDX,0));
+		max_velx=std::max(max_velx,phi_new[level].norm0(VELX_INDX,0));
+		max_vely=std::max(max_vely,phi_new[level].norm0(VELY_INDX,0));
+		max_velz=std::max(max_velz,phi_new[level].norm0(VELZ_INDX,0));
+		max_src=std::max(max_src,phi_new[level].norm0(SRC_INDX,0));	
+	}
+	Real max_vel=std::sqrt(max_velx*max_velx +  max_vely*max_vely  +  max_velz*max_velz);
+	Print()<<"The Value of Currrent:"<<current<<"\t"<<"Max temp:"<<max_temp<<"\t"<<"Mav_vel:"<<max_vel<<"\t"<<"Max_rhoE_Src:"<<max_src<<"\n";	
+///////////////////////////////
         // update primitive variables
         for (int l = 0; l <= finest_level; l++) 
         {
@@ -633,7 +645,7 @@ void mflo::compute_dsdt_flow(
                     compute_flux(
                         i, j, k, XDIR, sborder_arr, fluid_transport_arr, 
                         specdiff_arr, flux_arr[0], 
-                        dx, hyperbolics_order,hyperbolics_dissfactor,nsflag,spec_in_solid);
+                        dx, hyperbolics_order,hyperbolics_dissfactor,nsflag,spec_in_solid,mflo_user_funcs::weno_scheme);
                 });
 
             amrex::ParallelFor(
@@ -642,7 +654,7 @@ void mflo::compute_dsdt_flow(
                     compute_flux(
                         i, j, k, YDIR, sborder_arr, fluid_transport_arr, 
                         specdiff_arr, flux_arr[1], 
-                        dx, hyperbolics_order,hyperbolics_dissfactor,nsflag,spec_in_solid);
+                        dx, hyperbolics_order,hyperbolics_dissfactor,nsflag,spec_in_solid,mflo_user_funcs::weno_scheme);
                 });
 
             amrex::ParallelFor(
@@ -651,7 +663,7 @@ void mflo::compute_dsdt_flow(
                     compute_flux(
                         i, j, k, ZDIR, sborder_arr, fluid_transport_arr, 
                         specdiff_arr, flux_arr[2], 
-                        dx, hyperbolics_order,hyperbolics_dissfactor,nsflag,spec_in_solid);
+                        dx, hyperbolics_order,hyperbolics_dissfactor,nsflag,spec_in_solid,mflo_user_funcs::weno_scheme);
                 });
 
             // update residual

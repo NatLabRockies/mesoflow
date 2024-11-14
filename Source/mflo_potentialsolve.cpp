@@ -107,7 +107,7 @@ void mflo::solve_potential(Real current_time)
         acoeff[ilev].define(grids[ilev], dmap[ilev], 1, 0);
         bcoeff[ilev].define(grids[ilev], dmap[ilev], 1, num_grow);
         solution[ilev].define(grids[ilev], dmap[ilev], 1, num_grow);
-        rhs[ilev].define(grids[ilev], dmap[ilev], 1, 0);
+        rhs[ilev].define(grids[ilev], dmap[ilev], 1, num_grow);
 
         robin_a[ilev].define(grids[ilev], dmap[ilev], 1, 1);
         robin_b[ilev].define(grids[ilev], dmap[ilev], 1, 1);
@@ -158,7 +158,7 @@ void mflo::solve_potential(Real current_time)
         for (MFIter mfi(phi_new[ilev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
         {
             const Box& bx = mfi.tilebox();
-            const Box& gbx = amrex::grow(bx, 1);
+            const Box& gbx = mfi.growntilebox(num_grow);
             const auto dx = geom[ilev].CellSizeArray();
             auto prob_lo = geom[ilev].ProbLoArray();
             auto prob_hi = geom[ilev].ProbHiArray();
@@ -173,7 +173,7 @@ void mflo::solve_potential(Real current_time)
             Array4<Real> bcoeff_arr = bcoeff[ilev].array(mfi);
             Array4<Real> state_arr = state.array(mfi);
 
-            amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
+            amrex::ParallelFor(gbx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
                 rhs_arr(i,j,k)=0.0;
                 mflo_user_funcs::add_potential_sources(i, j, k, phi_arr, 
@@ -181,11 +181,11 @@ void mflo::solve_potential(Real current_time)
                                                        dx, time);
 
                 mflo_user_funcs::potential_dcoeff(i, j, k, phi_arr, 
-                                                  bcoeff_arr,state_arr, prob_lo, prob_hi, 
+                                                  bcoeff_arr, prob_lo, prob_hi, 
                                                   dx, time);
             });
         }
-
+		amrex::MultiFab::Copy(phi_new[ilev], bcoeff[ilev], 0, SIG_INDX, 1, 0);	
         // average cell coefficients to faces, this includes boundary faces
         Array<MultiFab, AMREX_SPACEDIM> face_bcoeff;
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
@@ -195,8 +195,6 @@ void mflo::solve_potential(Real current_time)
             face_bcoeff[idim].define(ba, acoeff[ilev].DistributionMap(), 1, 0);
         }
      
-		
-		bcoeff[ilev].FillBoundary(); // fill the ghost cells before taking average
 		
         amrex::average_cellcenter_to_face(GetArrOfPtrs(face_bcoeff),
                                           bcoeff[ilev], geom[ilev], true);
@@ -351,15 +349,10 @@ void mflo::solve_potential(Real current_time)
 		
 	}
 	
+	
 	current = volumeWeightedSum(GetVecOfConstPtrs(tmp), 0, geom, refRatio());
-	Print()<<"The Value of Currrent ............................... "<<current<<"\n";	
-		
-		
-		
-		
-		
-		
-		
+	
+	
 		
     //clean-up
     potential.clear();

@@ -45,7 +45,7 @@ void mflo::solve_magnetic_vecpot(Real current_time,int Adir)
     // A and B are scalar constants
     // a and b are scalar fields
     // f is rhs
-    // in this case: A=0,a=0,B=1,b=conductivity
+    // in this case: A=0,a=0,B=1,b=1
     // note also the negative sign
     //====================================================
 
@@ -156,7 +156,7 @@ void mflo::solve_magnetic_vecpot(Real current_time,int Adir)
         for (MFIter mfi(phi_new[ilev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
         {
             const Box& bx = mfi.tilebox();
-            const Box& gbx = amrex::grow(bx, 1);
+            const Box& gbx = mfi.growntilebox(num_grow);
             const auto dx = geom[ilev].CellSizeArray();
             auto prob_lo = geom[ilev].ProbLoArray();
             auto prob_hi = geom[ilev].ProbHiArray();
@@ -171,8 +171,7 @@ void mflo::solve_magnetic_vecpot(Real current_time,int Adir)
 
                 rhs_arr(i,j,k)=0.0;
                 //add mu0 J here
-               amrex::Real sigma=mflo_thermo::conductivity(phi_arr(i,j,k,TEMP_INDX),
-                                                         phi_arr(i,j,k,VFRAC_INDX),phi_arr(i,j,k,FLO_NVARS+AR_ID),phi_arr(i,j,k,FLO_NVARS+H2_ID));
+                Real sigma =  mflo_thermo::conductivity(phi_arr(i,j,k,TEMP_INDX),phi_arr(i,j,k,VFRAC_INDX),phi_arr(i,j,k,FLO_NVARS+AR_ID),phi_arr(i,j,k,FLO_NVARS+H2_ID),i,j,k,prob_lo,dx);
                 amrex::Real J=sigma*phi_arr(i,j,k,EFLDX_INDX+dircn);
                 //negative sign already accounted for in the diff term
                 rhs_arr(i,j,k)+=MU0*J; 

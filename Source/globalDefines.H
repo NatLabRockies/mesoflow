@@ -48,7 +48,8 @@
 #define BY_INDX 29
 #define BZ_INDX 30
 #define SIG_INDX 31
-#define FLO_NVARS (SIG_INDX+1)
+#define SRC_INDX 32
+#define FLO_NVARS (SRC_INDX+1)
 #define TOTAL_NVARS FLO_NVARS+NUM_SPECIES
 
 #define VISC_INDX 0

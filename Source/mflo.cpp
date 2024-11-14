@@ -71,7 +71,8 @@ mflo::mflo()
     mflo_varnames[BY_INDX] = "bfieldy";
     mflo_varnames[BZ_INDX] = "bfieldz";
     
-     mflo_varnames[SIG_INDX] = "sigma";
+    mflo_varnames[SIG_INDX] = "sigma";
+    mflo_varnames[SRC_INDX] = "source";
 
     for(int i=0;i<NUM_SPECIES;i++)
     {

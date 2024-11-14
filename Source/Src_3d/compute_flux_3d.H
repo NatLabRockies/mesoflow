@@ -92,7 +92,8 @@ void compute_flux(int i, int j, int k,int sweepdir,
                   Array4<Real> const& fx,
                   const GpuArray<Real, AMREX_SPACEDIM>& dx,
                   int hyperbolics_order,Real dissfactor,bool nsflag,
-                  int spec_in_solid)
+                  int spec_in_solid,
+                  int weno_scheme)
 {
     //|--left1--|--left--|--right--|--right1--|
     //|--(i-3)--|--(i-2)--|--(i-1)--|--i--|--(i+1)--|--(i+2)--|
@@ -268,7 +269,7 @@ void compute_flux(int i, int j, int k,int sweepdir,
             }
             else if(hyperbolics_order==5)
             {
-                weno_flux(ulm2,ulm1,ul,ur,urp1,urp2,fhalf,normal);
+                weno_flux(ulm2,ulm1,ul,ur,urp1,urp2,fhalf,normal,weno_scheme);
             }
             else
             {
