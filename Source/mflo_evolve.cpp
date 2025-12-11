@@ -248,13 +248,14 @@ void mflo::timeStep(int lev, Real time, int iteration, bool only_flow)
     }
 }
 
-void mflo::Advance_coupled_strang(int lev, Real time, Real dt_lev, int iteration, int ncycle,bool only_flow)
+void mflo::Advance_coupled_strang_flow(int lev, Real time, Real dt, Real dt_lev)
 {
     constexpr int num_grow = 3;
-    std::swap(phi_old[lev], phi_new[lev]); // old becomes new and new becomes
-                                           // old
+    std::swap(phi_old[lev], phi_new[lev]); // old becomes new and new becomes old
     t_old[lev] = t_new[lev];        // old time is now current time (time)
-    t_new[lev] += dt_lev;           // new time is ahead
+    
+    // new time is ahead, this is mainly for selecting S_new during fillpatch
+    t_new[lev] = t_old[lev]+dt_lev;           
     MultiFab& S_new = phi_new[lev]; // this is the old value, beware!
     MultiFab& S_old = phi_old[lev]; // current value
 
@@ -272,49 +273,56 @@ void mflo::Advance_coupled_strang(int lev, Real time, Real dt_lev, int iteration
         }
     }
 
-
     // stage 1
     // time is current time which is t_old
     FillPatch(lev, time, Sborder, 0, Sborder.nComp());
     // compute dsdt for 1/2 timestep
-    update_cutcell_data(lev, num_grow, Sborder, time, dt_lev);
-    compute_dsdt_flow(lev, num_grow, Sborder, dsdt_flow, time, dt_lev, sixth, true);
-    // S_new=S_old+dt*dsdt //sold is the current value
-    MultiFab::LinComb(S_new, one, Sborder, 0, dt_lev, dsdt_flow, 0, 0, S_new.nComp(), 0);
+    update_cutcell_data(lev, num_grow, Sborder, time, dt);
+    compute_dsdt_flow(lev, num_grow, Sborder, dsdt_flow, time, dt, sixth, true);
+    // S_new=S_old+dt*dsdt //s_old is the current value
+    MultiFab::LinComb(S_new, one, Sborder, 0, dt, dsdt_flow, 0, 0, S_new.nComp(), 0);
 
 
     // stage 2
     // time+dt_lev lets me pick S_new for sborder
     FillPatch(lev, time + dt_lev, Sborder, 0, Sborder.nComp());
-    update_cutcell_data(lev,num_grow,Sborder,time,dt_lev);
-    compute_dsdt_flow(lev, num_grow, Sborder, dsdt_flow, time + dt_lev, dt_lev, sixth,true);
+    update_cutcell_data(lev, num_grow, Sborder, time, dt);
+    compute_dsdt_flow(lev, num_grow, Sborder, dsdt_flow, time + dt, dt, sixth, true);
 
     // S_new=3/4 S_old+1/4 S_new + 1/4 dt*dsdt
     // S_new = S_new + dt*dsdt
     // S_new = S_new + 3*S_old
     // S_new =S_new/4
-    MultiFab::Saxpy(S_new, dt_lev, dsdt_flow, 0, 0, S_new.nComp(), 0);
+    MultiFab::Saxpy(S_new, dt, dsdt_flow, 0, 0, S_new.nComp(), 0);
     MultiFab::Saxpy(S_new, Real(3.0), S_old, 0, 0, S_new.nComp(), 0);
     S_new.mult(fourth);
 
     // stage 3
     // time+dt_lev lets me pick S_new for sborder
     FillPatch(lev, time + dt_lev, Sborder, 0, Sborder.nComp());
-    update_cutcell_data(lev,num_grow,Sborder,time,dt_lev);
-    compute_dsdt_flow(lev, num_grow, Sborder, dsdt_flow, time + dt_lev, dt_lev, two3rd,true);
+    update_cutcell_data(lev, num_grow, Sborder, time, dt);
+    compute_dsdt_flow(lev, num_grow, Sborder, dsdt_flow, time + dt, dt, two3rd,true);
     // S_new=1/3 S_old+2/3 S_new + 2/3 dt*dsdt
     // S_new = S_new + dt*dsdt
     // S_new = S_new + 2*S_old
     // S_new =S_new/3
-    MultiFab::Saxpy(S_new, dt_lev, dsdt_flow, 0, 0, S_new.nComp(), 0);
+    MultiFab::Saxpy(S_new, dt, dsdt_flow, 0, 0, S_new.nComp(), 0);
     MultiFab::Xpay(S_new, two, S_old, 0, 0, S_new.nComp(), 0);
     S_new.mult(third);
+}
+ 
+void mflo::Advance_coupled_strang(int lev, Real time, Real dt_lev, int iteration, int ncycle,bool only_flow)
+{
+
+    Advance_coupled_strang_flow(lev, time, 0.5*dt_lev, dt_lev);
 
     //Advance chemistry here
     if(!only_flow)
     {
         Advance_chemistry_implicit(lev, time, dt_lev);
     }
+    
+    Advance_coupled_strang_flow(lev, time, 0.5*dt_lev, dt_lev);
 }
 
 void mflo::Advance_coupled(int lev, Real time, Real dt_lev, int iteration, int ncycle,bool only_flow)
@@ -479,6 +487,14 @@ void mflo::Advance_chemistry_implicit(int lev, Real time, Real dt_lev)
         MultiFab S(S_vec[0], amrex::make_alias, 0, S_vec[0].nComp());
         compute_dsdt_chemistry(lev, num_grow, S, dSdt, time);
     };
+    
+    auto rhs_null_function = [&] ( Vector<MultiFab> & dSdt_vec, 
+                                  const Vector<MultiFab>& S_vec, const Real time) {
+        auto & dSdt = dSdt_vec[0];
+        dSdt.setVal(0.0);
+
+    };
+   
     Vector<MultiFab> state_old, state_new;
     // This term has the current state
     state_old.push_back(MultiFab(S_old, amrex::make_alias, 0, S_new.nComp()));
@@ -486,7 +502,36 @@ void mflo::Advance_chemistry_implicit(int lev, Real time, Real dt_lev)
     state_new.push_back(MultiFab(S_new, amrex::make_alias, 0, S_new.nComp()));
     // Define the integrator
     TimeIntegrator<Vector<MultiFab>> integrator(state_old);
-    integrator.set_rhs(rhs_function);
+    
+    if(integration_type=="SUNDIALS")
+    {
+        if(integration_sd_type=="ERK" || integration_sd_type=="DIRK")
+        {
+            integrator.set_rhs(rhs_function);
+        }
+        else if(integration_sd_type=="IMEX-RK")
+        {
+            //only implicit
+            integrator.set_imex_rhs(rhs_function,rhs_null_function);
+        }
+        else if(integration_sd_type=="EX-MRI" || 
+                integration_sd_type=="IM-MRI" ||
+                integration_sd_type=="IMEX-MRI")
+        {
+            //always assume reaction is the fast rhs
+            integrator.set_rhs(rhs_null_function);
+            integrator.set_fast_rhs(rhs_function);
+        }
+        else
+        {
+            amrex::Abort("Wrong sundials integration type in transpreact\n");
+        }
+    }
+    else
+    {
+        integrator.set_rhs(rhs_function);
+    }
+
     // Advance from time to time + dt_lev
     //S_new/phi_new should have the new state
     integrator.advance(state_old, state_new, time, dt_lev); 
