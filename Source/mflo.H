@@ -97,8 +97,8 @@ public:
     void Advance_chemistry(int lev, 
             Real time, Real dt_lev);
 
-    void Advance_chemistry_implicit(int lev,
-            Real time, Real dt_lev);
+    void Advance_chemistry_strang_split(int lev,
+            Real time, Real dt);
 
     // compute dt from CFL considerations
     Real EstTimeStep(int lev);

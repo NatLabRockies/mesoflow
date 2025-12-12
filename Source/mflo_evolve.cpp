@@ -281,8 +281,7 @@ void mflo::Advance_coupled_strang_flow(int lev, Real time, Real dt, Real dt_lev)
     compute_dsdt_flow(lev, num_grow, Sborder, dsdt_flow, time, dt, sixth, true);
     // S_new=S_old+dt*dsdt //s_old is the current value
     MultiFab::LinComb(S_new, one, Sborder, 0, dt, dsdt_flow, 0, 0, S_new.nComp(), 0);
-
-
+    
     // stage 2
     // time+dt_lev lets me pick S_new for sborder
     FillPatch(lev, time + dt_lev, Sborder, 0, Sborder.nComp());
@@ -313,16 +312,20 @@ void mflo::Advance_coupled_strang_flow(int lev, Real time, Real dt, Real dt_lev)
  
 void mflo::Advance_coupled_strang(int lev, Real time, Real dt_lev, int iteration, int ncycle,bool only_flow)
 {
-
-    Advance_coupled_strang_flow(lev, time, 0.5*dt_lev, dt_lev);
-
     //Advance chemistry here
     if(!only_flow)
     {
-        Advance_chemistry_implicit(lev, time, dt_lev);
+        Advance_chemistry_strang_split(lev, time, 0.5*dt_lev);
     }
     
-    Advance_coupled_strang_flow(lev, time, 0.5*dt_lev, dt_lev);
+    Advance_coupled_strang_flow(lev, time, dt_lev, dt_lev);
+    
+    //Advance chemistry here
+    if(!only_flow)
+    {
+        Advance_chemistry_strang_split(lev, time, 0.5*dt_lev);
+    }
+    
 }
 
 void mflo::Advance_coupled(int lev, Real time, Real dt_lev, int iteration, int ncycle,bool only_flow)
@@ -475,21 +478,23 @@ Implicit (with sundials):
    integration.type = SUNDIALS
    integration.sundials.strategy = CVODE
  */
-void mflo::Advance_chemistry_implicit(int lev, Real time, Real dt_lev)
+void mflo::Advance_chemistry_strang_split(int lev, Real time, Real dt)
 {
     constexpr int num_grow = 3;
     std::swap(phi_old[lev], phi_new[lev]); // old becomes new and new becomes old
     MultiFab& S_new = phi_new[lev]; // old value
     MultiFab& S_old = phi_old[lev]; // current value
-
-    auto rhs_function = [&] ( Vector<MultiFab> & dSdt_vec, const Vector<MultiFab>& S_vec, const Real time) {
+    
+    auto rhs_function = [&] ( Vector<MultiFab> & dSdt_vec, const Vector<MultiFab>& S_vec, const Real time) 
+    {
         auto & dSdt = dSdt_vec[0];
         MultiFab S(S_vec[0], amrex::make_alias, 0, S_vec[0].nComp());
         compute_dsdt_chemistry(lev, num_grow, S, dSdt, time);
     };
     
     auto rhs_null_function = [&] ( Vector<MultiFab> & dSdt_vec, 
-                                  const Vector<MultiFab>& S_vec, const Real time) {
+                                  const Vector<MultiFab>& S_vec, const Real time) 
+    {
         auto & dSdt = dSdt_vec[0];
         dSdt.setVal(0.0);
 
@@ -532,9 +537,9 @@ void mflo::Advance_chemistry_implicit(int lev, Real time, Real dt_lev)
         integrator.set_rhs(rhs_function);
     }
 
-    // Advance from time to time + dt_lev
+    // Advance from time to time + dt
     //S_new/phi_new should have the new state
-    integrator.advance(state_old, state_new, time, dt_lev); 
+    integrator.advance(state_old, state_new, time, dt); 
 }
 
 void mflo::update_cutcell_data(
