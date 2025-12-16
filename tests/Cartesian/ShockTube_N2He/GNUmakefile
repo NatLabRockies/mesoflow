@@ -1,3 +1,4 @@
+MFLO_HOME ?= ../../../
 PRECISION  = DOUBLE
 PROFILE    = FALSE
 
@@ -17,4 +18,4 @@ USE_SEC_ORDER_FLUX = FALSE
 Bpack   := ./Make.package 
 Blocs   := . 
 
-include ../../Make.mflo
+include ${MFLO_HOME}/tests/Make.mflo

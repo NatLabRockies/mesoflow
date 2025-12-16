@@ -10,6 +10,7 @@ namespace mflo_user_funcs
     AMREX_GPU_DEVICE_MANAGED Real Aconc_inlet=0.0;
     AMREX_GPU_DEVICE_MANAGED Real Aconc_initial=0.0;
     AMREX_GPU_DEVICE_MANAGED Real siteconc=1.0;
+    AMREX_GPU_DEVICE_MANAGED Real sponge_zone_dist=23e-3;
 
     void initialize_problem()
     {
@@ -23,5 +24,6 @@ namespace mflo_user_funcs
         pp.query("Aconc_inlet",Aconc_inlet);
         pp.query("Aconc_initial",Aconc_initial);
         pp.query("siteconc",siteconc);
+        pp.query("sponge_zone_dist",sponge_zone_dist);
     }
 }

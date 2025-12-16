@@ -3,8 +3,8 @@
 namespace mflo_species
 {
     amrex::Vector<std::string> specnames(NUM_SPECIES);
-    AMREX_GPU_DEVICE_MANAGED amrex::Real advect_flags[NUM_SPECIES]={one};
-    AMREX_GPU_DEVICE_MANAGED amrex::Real molwts[NUM_SPECIES]={one};
+    AMREX_GPU_DEVICE_MANAGED amrex::Real advect_flags[NUM_SPECIES]={0};
+    AMREX_GPU_DEVICE_MANAGED amrex::Real molwts[NUM_SPECIES]={0.0};
 
     void init()
     {
@@ -19,6 +19,9 @@ namespace mflo_species
         molwts[B_ID]=0.044;
         molwts[S_ID]=0.001;
 
+        advect_flags[AIR_ID]=1;
+        advect_flags[A_ID]=1;
+        advect_flags[B_ID]=1;
         advect_flags[S_ID]=0;
     }    
     void close()

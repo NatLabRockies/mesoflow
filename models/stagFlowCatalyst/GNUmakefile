@@ -1,3 +1,4 @@
+MFLO_HOME ?= ../../
 PRECISION  = DOUBLE
 PROFILE    = FALSE
 
@@ -15,4 +16,4 @@ USE_CUDA   = FALSE
 Bpack   := ./Make.package 
 Blocs   := . 
 
-include ../Make.mflo
+include ${MFLO_HOME}/models/Make.mflo

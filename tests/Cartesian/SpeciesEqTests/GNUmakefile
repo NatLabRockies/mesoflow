@@ -1,3 +1,4 @@
+MFLO_HOME ?= ../../../
 PRECISION  = DOUBLE
 PROFILE    = FALSE
 SUNDIALS_DIR?=/Users/hsitaram/projects/sundials
@@ -12,7 +13,7 @@ COMP	   = gnu
 USE_MPI    = TRUE
 USE_OMP    = FALSE 
 USE_CUDA   = FALSE
-USE_SUNDIALS = TRUE
+USE_SUNDIALS = FALSE
 
 #USE_SEC_ORDER_FLUX = TRUE
 
@@ -25,4 +26,4 @@ ifeq ($(USE_SUNDIALS), TRUE)
     LIBRARIES += -L$(SUNDIALS_DIR)/lib64 -lsundials_core -lsundials_nvecserial -lsundials_nvecmanyvector
 endif
 
-include ../../Make.mflo
+include ${MFLO_HOME}/tests/Make.mflo

@@ -21,6 +21,7 @@ namespace mflo_user_funcs
     extern AMREX_GPU_DEVICE_MANAGED Real Aconc_inlet;
     extern AMREX_GPU_DEVICE_MANAGED Real Aconc_initial;
     extern AMREX_GPU_DEVICE_MANAGED Real siteconc;
+    extern AMREX_GPU_DEVICE_MANAGED Real sponge_zone_dist;
 
     void initialize_problem();
 
@@ -32,8 +33,13 @@ namespace mflo_user_funcs
                 GpuArray<Real, AMREX_SPACEDIM> dx,
                 const Real time)
         {
-            transpcoeffs(i,j,k,VISC_INDX  ) = 1e-5;       //viscosity
-            transpcoeffs(i,j,k,THCOND_INDX) = 0.01; //thermal conductivity
+            Real x=prob_lo[0]+(i+0.5)*dx[0];
+            Real lscale=10*dx[0];
+            Real trans_scale=20.0;
+            Real sponge_fac=0.5*(1.0+std::tanh((x-sponge_zone_dist)/lscale));
+
+            transpcoeffs(i,j,k,VISC_INDX  ) = 1e-5*(1.0+sponge_fac*trans_scale);       //viscosity
+            transpcoeffs(i,j,k,THCOND_INDX) = 0.01*(1.0+sponge_fac*trans_scale); //thermal conductivity
         }
 
     AMREX_GPU_DEVICE AMREX_INLINE
