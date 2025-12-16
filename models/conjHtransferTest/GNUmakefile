@@ -16,4 +16,4 @@ USE_CUDA   = FALSE
 Bpack   := ./Make.package
 Blocs   := .
 
-include ${MFLO_HOME}/models/Make.mflo
+include ${MFLO_HOME}/Make.mflo
