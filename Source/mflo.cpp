@@ -295,14 +295,17 @@ void mflo::ReadParameters()
         pp.query("conjugate_heat_transfer",conj_ht);
     }
     {
-        // Add default time integration options for the chemisty solver
-        // Note that this is explicit RK3, which does not require sundials
-        ParmParse pp("integration");
-        if( not pp.contains("type") ) {
-            pp.add("type", "RungeKutta");
-            pp.add("rk.type", 3);
+        ParmParse pp_int("integration");
+        if( not pp_int.contains("type") ) 
+        {
+            pp_int.add("type", "RungeKutta");
+            pp_int.add("rk.type", 3);
             Print() << "Defaulting to explicit RK3 scheme for chemistry solve" << std::endl;
         }
+        
+        pp_int.query("type",integration_type);
+        ParmParse pp_int_sd("integration.sundials");
+        pp_int_sd.query("type",integration_sd_type);
     }
 }
 

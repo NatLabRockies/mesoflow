@@ -1,5 +1,7 @@
+MFLO_HOME ?= ../../../
 PRECISION  = DOUBLE
 PROFILE    = FALSE
+SUNDIALS_HOME?=/projects/co2rue/sundials
 
 DEBUG      = TRUE
 DEBUG      = FALSE
@@ -11,10 +13,9 @@ COMP	   = gnu
 USE_MPI    = TRUE
 USE_OMP    = FALSE 
 USE_CUDA   = FALSE
-
-#USE_SEC_ORDER_FLUX = TRUE
+USE_SUNDIALS = FALSE
 
 Bpack   := ./Make.package 
 Blocs   := . 
 
-include ../../Make.mflo
+include ${MFLO_HOME}/Make.mflo

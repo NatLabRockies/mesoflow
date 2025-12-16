@@ -1,13 +1,15 @@
 #!/bin/bash
-#SBATCH --job-name=regtestgpu
-#SBATCH --partition=gpu
 #SBATCH --nodes=1
-#SBATCH --gres=gpu:2
-#SBATCH --ntasks-per-node=2
 #SBATCH --time=02:00:00
-#SBATCH --account=biocon
+#SBATCH --account=co2rue
+#SBATCH --partition=gpu-h100
+#SBATCH --gres=gpu:h100:4
+#SBATCH --job-name=regtestgpu
 #SBATCH --output=regout
 #SBATCH --error=regerr
+#SBATCH --exclusive
 
-source ~/loadcuda.sh
-. ./script_reg_testing.sh 2 srun ~/ytenv.sh /projects/biocon/mesoflow/tests/mflo_results_gpu "USE_CUDA=TRUE" 
+export MFLO_HOME=/home/hsitaram/codes/mesoflow/
+export AMREX_HOME=/home/hsitaram/codes/amrex
+module load cuda
+. ./script_reg_testing.sh 2 srun ~/harienv.sh /scratch/hsitaram/mflo_results_gpu "USE_CUDA=TRUE" 

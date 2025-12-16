@@ -84,6 +84,8 @@ public:
         int iteration,
         int ncycle,bool only_flow=false);
 
+    void Advance_coupled_strang_flow(int lev, Real time, Real dt, Real dt_lev);
+
     // advance a single level for a single time step, updates flux registers
     void Advance_coupled(
         int lev,
@@ -95,8 +97,8 @@ public:
     void Advance_chemistry(int lev, 
             Real time, Real dt_lev);
 
-    void Advance_chemistry_implicit(int lev,
-            Real time, Real dt_lev);
+    void Advance_chemistry_strang_split(int lev,
+            Real time, Real dt);
 
     // compute dt from CFL considerations
     Real EstTimeStep(int lev);
@@ -125,6 +127,9 @@ public:
     void update_cutcell_data(int lev, const int num_grow,
     MultiFab& Sborder,Real time,Real dt);
     void clip_neg_speciesconc(int lev);
+    
+    std::string integration_type="ForwardEuler";
+    std::string integration_sd_type="ERK";
 
 private:
     ////////////////

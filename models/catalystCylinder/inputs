@@ -1,5 +1,5 @@
 max_step  = 200000
-stop_time = 0.01
+stop_time = 0.03
 
 # PROBLEM SIZE & GEOMETRY
 geometry.is_periodic =  0  0  1
@@ -49,7 +49,7 @@ mflo.vely_refinegrad = 1e20
 
 # PLOTFILES
 amr.plot_file  = plt    # root name of plot file
-amr.plot_int   = 5000     # number of timesteps between plot files
+amr.plot_int   = 1000     # number of timesteps between plot files
 
 # CHECKPOINT
 amr.chk_file = chk      # root name of checkpoint file
@@ -68,3 +68,4 @@ user.Aconc_inlet=2.0
 user.Aconc_initial=2.0
 
 mflo.species_in_solid=1
+mflo.sponge_zone_dist=23.0e-3

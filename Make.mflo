@@ -1,4 +1,3 @@
-MFLO_HOME  ?= ../../../../mesoflow
 AMREX_HOME ?= $(MFLO_HOME)/submods/amrex
 
 TOP := $(MFLO_HOME)
