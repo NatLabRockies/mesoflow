@@ -485,28 +485,19 @@ void mflo::Advance_chemistry_strang_split(int lev, Real time, Real dt)
     MultiFab& S_new = phi_new[lev]; // old value
     MultiFab& S_old = phi_old[lev]; // current value
     
-    auto rhs_function = [&] ( Vector<MultiFab> & dSdt_vec, const Vector<MultiFab>& S_vec, const Real time) 
+    auto rhs_function = [&] ( MultiFab& dSdt, MultiFab& S, const Real time) 
     {
-        auto & dSdt = dSdt_vec[0];
-        MultiFab S(S_vec[0], amrex::make_alias, 0, S_vec[0].nComp());
         compute_dsdt_chemistry(lev, num_grow, S, dSdt, time);
     };
     
-    auto rhs_null_function = [&] ( Vector<MultiFab> & dSdt_vec, 
-                                  const Vector<MultiFab>& S_vec, const Real time) 
+    auto rhs_null_function = [&] ( MultiFab& dSdt, 
+                                   MultiFab& S, const Real time) 
     {
-        auto & dSdt = dSdt_vec[0];
         dSdt.setVal(0.0);
-
     };
    
-    Vector<MultiFab> state_old, state_new;
-    // This term has the current state
-    state_old.push_back(MultiFab(S_old, amrex::make_alias, 0, S_new.nComp()));
-    // This is where the integrator puts the new state, hence aliased to S_new
-    state_new.push_back(MultiFab(S_new, amrex::make_alias, 0, S_new.nComp()));
     // Define the integrator
-    TimeIntegrator<Vector<MultiFab>> integrator(state_old);
+    TimeIntegrator<MultiFab> integrator(S_old);
     
     if(integration_type=="SUNDIALS")
     {
@@ -524,22 +515,24 @@ void mflo::Advance_chemistry_strang_split(int lev, Real time, Real dt)
                 integration_sd_type=="IMEX-MRI")
         {
             //always assume reaction is the fast rhs
+            amrex::Real fast_dt_ratio=0.1;
             integrator.set_rhs(rhs_null_function);
             integrator.set_fast_rhs(rhs_function);
+            integrator.set_fast_time_step(fast_dt_ratio*dt);
         }
         else
         {
             amrex::Abort("Wrong sundials integration type in transpreact\n");
         }
     }
-    else
+    else  //RK
     {
         integrator.set_rhs(rhs_function);
     }
 
     // Advance from time to time + dt
     //S_new/phi_new should have the new state
-    integrator.advance(state_old, state_new, time, dt); 
+    integrator.advance(S_old, S_new, time, dt); 
 }
 
 void mflo::update_cutcell_data(
