@@ -61,13 +61,13 @@ jobs:
           mpirun -n 2 ./mesoflow3d.gnu.DEBUG.MPI.ex inputs max_step=20
   gputest:
     name: cudatest
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         cuda_ver: [11.4]
         include:
-          - cuda_ver: "11.4"
-            cuda_pkg: 11-4
+          - cuda_ver: "12.6"
+            cuda_pkg: 12-6
             cuda_extra: libcurand-dev-11-4 cuda-cupti-dev-11-4
     steps:
       - name: Clone
@@ -76,11 +76,15 @@ jobs:
           submodules: true
       - name: Prepare CUDA environment
         run: |
-          sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/3bf863cc.pub
-          echo "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64 /" | sudo tee /etc/apt/sources.list.d/cuda.list
+          wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb
+          sudo dpkg -i cuda-keyring_1.1-1_all.deb
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends ninja-build \
-              cuda-command-line-tools-${{matrix.cuda_pkg}} cuda-compiler-${{matrix.cuda_pkg}} cuda-minimal-build-${{matrix.cuda_pkg}} cuda-nvml-dev-${{matrix.cuda_pkg}} cuda-nvtx-${{matrix.cuda_pkg}} ${{matrix.cuda_extra}}
+          sudo apt-get install -y cuda-command-line-tools-12-6 \
+              cuda-compiler-12-6 cuda-minimal-build-12-6 \
+              cuda-nvml-dev-12-6 cuda-nvtx-12-6 \
+              libcurand-dev-12-6 cuda-cupti-dev-12-6 \
+              libcusolver-dev-12-6 libcusparse-dev-12-6 \
+              libcublas-dev-12-6 libcurand-dev-12-6 libnvjitlink-12-6
       - name: Configure and build
         working-directory: ./tests/Cartesian
         run: |
