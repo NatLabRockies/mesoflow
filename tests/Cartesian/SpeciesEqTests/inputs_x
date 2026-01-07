@@ -52,7 +52,12 @@ amr.chk_file = chk      # root name of checkpoint file
 amr.chk_int  = -1       # number of timesteps between checkpoint files
 
 #integration.type="SUNDIALS"
-#integration.sundials.type="IM-MRI"
-#integration.sundials.method="ARKODE_ARK2_DIRK_3_1_2"
 #integration.sundials.type="DIRK"
 #integration.sundials.method="ARKODE_BACKWARD_EULER_1_1"
+
+#integration.type="RungeKutta"
+#integration.rk.type=3
+
+#integration.type="SUNDIALS"
+#integration.sundials.type="IM-MRI"
+
