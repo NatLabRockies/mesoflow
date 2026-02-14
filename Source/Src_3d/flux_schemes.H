@@ -355,7 +355,7 @@ void central_with_diss_flux(Real uim1[NCVARS+NUM_SPECIES],Real ui[NCVARS+NUM_SPE
     for(int i=0;i<(NCVARS+NUM_SPECIES);i++)
     {
         fhalf[i] = twelveth*(7*fi[i]+7*fim1[i]-fim2[i]-fip1[i]);
-        fhalf[i] -= twelveth*(3*ui[i]-3*uim1[i]-uip1[i]+ui[i])*(veln+ahalf)*dissfactor;
+        fhalf[i] -= twelveth*(3*ui[i]-3*uim1[i]-uip1[i]+uim2[i])*(veln+ahalf)*dissfactor;
     }
 
 }
