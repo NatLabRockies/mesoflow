@@ -1,0 +1,73 @@
+max_step  = 20000000
+stop_time = 5.0
+
+# PROBLEM SIZE & GEOMETRY
+geometry.is_periodic =  0  0  0
+geometry.coord_sys   =  0       # 0 => cart
+geometry.prob_lo     =  -12.5e-3   -12.5e-3  0e-3
+geometry.prob_hi     =   12.5e-3   12.5e-3   50e-3
+amr.n_cell           =   128 128 256
+
+# VERBOSITY
+amr.v              = 1       # verbosity in Amr
+
+# REFINEMENT
+amr.max_level       = 0       # maximum level number allowed
+amr.blocking_factor = 4       # block factor in grid generation
+amr.max_grid_size   = 4096
+
+
+amr.regrid_int      = 5       # how often to regrid
+
+# TIME STEP CONTROL
+mflo.cfl            = 0.3     # cfl number for hyperbolic system
+                             # In this test problem, the velocity is
+			     # time-dependent.  We could use 0.9 in
+			     # the 3D test, but need to use 0.7 in 2D
+			     # to satisfy CFL condition.
+
+mflo.do_reflux = 1
+
+#periodic 0
+#extdir 3
+#foextrap 2 
+#wall 6
+
+mflo.order_hyp = 5
+mflo.lo_bc = 6 6 3
+mflo.hi_bc = 6 6 2
+
+#mflo.order_hyp = 4
+#mflo.dissfactor = 0.1
+
+# Tagging
+mflo.tagged_vars = volfrac vely
+mflo.volfrac_refine = 1e20
+mflo.volfrac_refinegrad = 0.1
+mflo.vely_refine = 3.0
+mflo.vely_refinegrad = 1e20
+
+# PLOTFILES
+amr.plot_file  = plt    # root name of plot file
+amr.plot_int   = 5000     # number of timesteps between plot files
+
+# CHECKPOINT
+amr.chk_file = chk      # root name of checkpoint file
+amr.chk_int  = 10000       # number of timesteps between checkpoint files
+
+#if you want to run the production case, turn these on
+#amr.n_cell           =   512  512    512
+#amr.max_grid_size   = 32
+#max_step  = 200000000
+
+user.nparticles=1000
+user.partradmean=1.5e-3
+user.partradstddev=0.3e-3
+user.gasvel=1.0
+user.rho0=1.16
+user.p0=1e5
+user.CH4conc_inlet=2.0
+user.CH4conc_initial=0.0
+
+mflo.species_in_solid=1
+mflo.sponge_zone_dist=23.0e-3

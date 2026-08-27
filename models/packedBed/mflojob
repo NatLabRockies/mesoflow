@@ -1,0 +1,11 @@
+#!/bin/bash
+#SBATCH --nodes=4             
+#SBATCH --ntasks-per-node=64 
+#SBATCH --time=48:00:00             
+#SBATCH --account=biocon
+#SBATCH --job-name=methanecrack
+#SBATCH --output=job_output_filename.%j.out  # %j will be replaced with the job ID
+#SBATCH --partition=standard
+
+module load PrgEnv-gnu
+srun -n 256 ./*.ex inputs amr.restart=chk200000
